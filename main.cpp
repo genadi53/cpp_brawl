@@ -4,15 +4,67 @@ using namespace std;
 // auto rd = std::random_device {}; 
 // auto rng = std::default_random_engine { rd() };
 auto rng = std::default_random_engine {};
-
+bool s_first = true;
 
 int main(int args, char* argv[]){
 
     Brawl brawl;
-    brawl.generateRandomFighters(5);
-    brawl.printFightersNames();
-    brawl.startBrawl();
-    brawl.printFightersNames();
+    Brawl * brawlPtr = new Brawl();
+    int choice;
+    int number;
+    bool exit = false;
+
+    // thread worker_thread(brawl.startBrawl);
+    int result;
+
+     do{
+        printMenuOptions();
+        cin >> choice;
+        switch(choice){
+            case 1: {
+                brawl.generateFighters();
+                break;
+            };
+            case 2: {
+                cout << "How much fighters to generate: " << endl;
+                number = getValidNumber();
+                brawl.generateRandomFighters(number);
+                break;
+            };
+            case 3: {
+                brawl.printFightersNames();
+                break;
+            };
+            case 4: {
+                s_first = true;
+                thread worker_thread(&Brawl::startBrawl, &brawl);
+                worker_thread.join();
+
+                // pthread_create(&worker_thread, NULL, &Brawl::startBrawl, NULL);
+                brawl.startBrawl();
+                // pthread_join(worker_thread, NULL);
+                break;
+            };
+            case 5: {
+                brawl.printWinner();
+                break;
+            };
+            case 6: {
+                printMenuOptions();
+                break;
+            };
+            case 0: {
+                exit = true;
+                break;  
+            }
+            default: break;
+        }
+    }while(!exit);   
+    return 0;
+    // brawl.generateRandomFighters(5);
+    // brawl.printFightersNames();
+    // brawl.startBrawl();
+    // brawl.printFightersNames();
 
 }
 
@@ -146,9 +198,15 @@ void Brawl::shuffleFightersOrder(){
 // And after each round the fighters are shuffled 
 // and their hp is set to full until there is a winner of the brawl
 void Brawl::startBrawl(){
-    
-    if(this->fighters.size() == 1){
-        cout << "Need more than one fighter to start a brawl!" <<endl;
+
+    if(!s_first){
+        return;
+    } else {
+        s_first = false;
+    }
+
+    if(this->fighters.size() <= 1){
+        cout << "Need two or more fighters to start a brawl!" <<endl;
         return;
     }
 
@@ -166,7 +224,7 @@ void Brawl::startBrawl(){
                 fight(&this->fighters[i], &this->fighters[i+1]);
             }
         } else {
-            cout << "oddc " << size <<endl;
+            cout << "odd " << size <<endl;
             // Odd total number of fighters
              for(int i = 0; i < size-1; i+=2){ 
                 fight(&fighters[i], &fighters[i+1]);
@@ -181,10 +239,10 @@ void Brawl::startBrawl(){
             haveWinner = true;
             cout << "****** Winner ******"<< endl;
             cout << "Winner is " << this->fighters[0].getFighterName() << endl;
+            this->fighters[0].setIsWinner(true);
         }        
     }
 }
-
 // Function that takes two fighters as arguments
 // and in a loop they deal damage to each other
 // until the HP of one of them is <= 0
@@ -263,13 +321,18 @@ int Brawl::returnIndex(string fighterName){
 }
 
 // Function that iterates over the vector and prints the name of the winner  
-void Brawl::printFightersNames(){
+void Brawl::printWinner(){
+    bool isPrinted = false;
     for(vector<Fighter>::iterator fighter = fighters.begin();
      fighter != fighters.end(); ++fighter){
         if(fighter->getIsWinner() == 1) {
             cout << "****** Winner ******"<< endl;
             cout << "Figther: " << fighter->getFighterName() << " is the Winner" << endl; 
+            isPrinted = true;
         }
+     }
+     if(isPrinted == 0){
+        cout << "There is no winner yet!"<< endl;  
      }
 }
 

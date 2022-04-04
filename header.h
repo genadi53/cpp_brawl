@@ -9,6 +9,12 @@
 #include <random>
 #include<ctime>
 #include<cstdlib>
+#include <thread>
+#include <chrono>
+#include <pthread.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <stdio.h>
 
 using namespace std;
 
@@ -44,6 +50,7 @@ class Brawl {
         Brawl();
         ~Brawl();
 
+       
         vector<Fighter> getFighters();
         void setFighters(vector<Fighter>& fighters);
 
@@ -56,7 +63,8 @@ class Brawl {
         void startBrawl();
         int returnIndex(string fighterName);
         void removeLosers();
-
+        void printWinner();
+        
     private:
       vector<Fighter> fighters;  
 };
