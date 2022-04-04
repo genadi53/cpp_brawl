@@ -1,58 +1,23 @@
 #include "header.h"
-
 using namespace std;
 
 // auto rd = std::random_device {}; 
 // auto rng = std::default_random_engine { rd() };
 auto rng = std::default_random_engine {};
 
+
 int main(int args, char* argv[]){
-    vector<Fighter> fighters;
-    Fighter f1("Tom", 100);
-    generateRandomFighters(fighters, 5);
-    printFightersNames(fighters);
-    // startBrawl(fighters);
-    returnIndex(fighters, f1);
-   
-    printFightersNames(fighters);
 
+    Brawl brawl;
+    brawl.generateRandomFighters(5);
+    brawl.printFightersNames();
+    brawl.startBrawl();
+    brawl.printFightersNames();
 
 }
 
-int returnIndex(vector<Fighter>& fighters, Fighter f1){
-
-    string myString = f1.getFighterName();
-    auto it = find_if(fighters.begin(), fighters.end(), [&myString]
-    (const Fighter& fighter) {
-        cout << "MS " << myString <<endl;
-        cout << "NAME " << ((Fighter)fighter).getFighterName() <<endl;
-        return ((Fighter)fighter).getFighterName() == myString;
-        });
-
-    if (it != fighters.end())
-    {
-        int index = std::distance(fighters.begin(), it);
-        return index;
-    }
-    return -1;
-}
-
-int main2(){
-    
-    vector<Fighter> fighters;
-    generateRandomFighters(fighters, 5);
-    // generateFighters(fighters);
-    printFightersNames(fighters);
-    shuffleFightersOrder(fighters);
-
-    cout << "After" <<endl;
-    printFightersNames(fighters);
-
-    // fight(fighters, fighters[0], fighters[1]);
-    return 0;
-}
-
-// Constructors and destructor
+// **************** FIGHTER **********************
+// Constructors and destructor for the Fighter class
 Fighter::Fighter(){}
 Fighter::~Fighter(){}
 
@@ -60,6 +25,7 @@ Fighter::Fighter(string name, int hp){
     setFighterName(name);
     setFighterHP(hp);
     setIsWinner(false);
+    setIsEliminated(false);
 }
 
 // Getters and setters for name and hp of the fighter
@@ -81,6 +47,7 @@ void Fighter::setFighterHP(int hp){
 
 // Getters and setters for bool variable
 // that shows it the fighter is a winner of the brawl
+// or is eliminated
 bool Fighter::getIsWinner(){
     return this->isWinner;
 }
@@ -89,22 +56,50 @@ void Fighter::setIsWinner(bool isWinner){
     this->isWinner = isWinner;
 }
 
+bool Fighter::getIsEliminated(){
+     return this->isEliminated;
+}
+
+void Fighter::setIsEliminated(bool isEliminated){
+    this->isEliminated = isEliminated;
+}
+
+// function that return how much damage the fighter will deal
 int Fighter::dealDamage(){
     return generateRandomNumber(0, 20);
 }
 
-void generateRandomFighters(vector<Fighter>& fighters, int num){
-    array<string, 5> names = {"John", "Adam", "Aron", "Samuel", "Caleb"};
+
+// **************** BRAWL **********************
+// Constructors and destructors for the Brawl class
+Brawl::Brawl(){}
+
+Brawl::~Brawl(){}
+
+// Getters and setters for vector of fighters
+vector<Fighter> Brawl::getFighters(){
+    return this->fighters;
+}
+
+void Brawl::setFighters(vector<Fighter>& fighters){
+    this->fighters = fighters;
+}
+
+// Function used to generate random fighters from array of names,
+// by given a number from the user
+void Brawl::generateRandomFighters(int num){
+    array<string, 5> names = {"Robert", "Brandon", "Dan", "Rick", "John"};
     for(int i = 0; i < num; i++){
         std::stringstream name;
         name << names[generateRandomNumber(0,4)] << i;
-        // cout << name.str() << endl;
         Fighter f1(name.str(), 100);
-        fighters.push_back(f1);
+        this->fighters.push_back(f1);
     }
 }
 
-void generateFighters(vector<Fighter>& fighters){
+// Function that fills the vector with
+// fighters entered by the program's user
+void Brawl::generateFighters(){
     int count;
     string name;
     cout << "Enter number of fighters: " << endl;
@@ -113,62 +108,172 @@ void generateFighters(vector<Fighter>& fighters){
         cout << "Enter fighter " << i+1 << " name: " <<endl;
         cin >> name;
         Fighter f1(name, 100);
-        fighters.push_back(f1);
+        this->fighters.push_back(f1);
     }
 }
 
-void printFightersNames(vector<Fighter>& fighters){
+// Function that iterates over the vector and prints
+// the names of fighters 
+void Brawl::printFightersNames(){
     for(vector<Fighter>::iterator fighter = fighters.begin();
      fighter != fighters.end(); ++fighter){
-         cout << "Figther: " << fighter->getFighterName() << endl; 
+        cout << "Figther: " << fighter->getFighterName() << endl; 
+        // if(fighter->getIsEliminated() == 1) {
+        //  cout << " elim "<<endl; 
+        // } else {
+        //  cout << " not elim" <<endl; 
+        // }
      }
 }
 
-void drinkAndHeal(vector<Fighter>& fighters){
-     for(vector<Fighter>::iterator fighter = fighters.begin();
-     fighter != fighters.end(); ++fighter){
+// Function that iterates over the vector and sets
+// all of fighters' hp to full 
+void Brawl::drinkAndHeal(){
+     for(vector<Fighter>::iterator fighter = this->fighters.begin();
+     fighter != this->fighters.end(); ++fighter){
          fighter->setFighterHP(100);
      }
 }
 
-void fight(vector<Fighter>& fighters, Fighter f1, Fighter f2){
+// Function that shuffles the order of vector of fighters 
+void Brawl::shuffleFightersOrder(){
+    std::shuffle(std::begin(this->fighters), std::end(this->fighters), rng);
+}
+
+// Most important function of the program
+// Starts a infinite loop and 
+// then the fighters are matched in pairs and fight.
+// And after each round the fighters are shuffled 
+// and their hp is set to full until there is a winner of the brawl
+void Brawl::startBrawl(){
+    
+    if(this->fighters.size() == 1){
+        cout << "Need more than one fighter to start a brawl!" <<endl;
+        return;
+    }
+
+    bool haveWinner = false;
+    while(!haveWinner){
+        int size = this->fighters.size();
+        cout << "size " << size <<endl;
+        if(size % 2 == 0){
+            cout << "even " << size <<endl;
+            // Even total number of fighters
+            for(int i = 0; i < size; i+=2){
+                // cout << i << " - " << i+1 <<endl;
+                // cout << i << " - " << fighters[i].getFighterName() <<endl;
+                // cout << i+1 << " - " << fighters[i+1].getFighterName() <<endl;
+                fight(&this->fighters[i], &this->fighters[i+1]);
+            }
+        } else {
+            cout << "oddc " << size <<endl;
+            // Odd total number of fighters
+             for(int i = 0; i < size-1; i+=2){ 
+                fight(&fighters[i], &fighters[i+1]);
+            }
+        }
+
+        this->removeLosers();
+        this->shuffleFightersOrder();
+        this->drinkAndHeal();
+
+        if(this->fighters.size() == 1){
+            haveWinner = true;
+            cout << "****** Winner ******"<< endl;
+            cout << "Winner is " << this->fighters[0].getFighterName() << endl;
+        }        
+    }
+}
+
+// Function that takes two fighters as arguments
+// and in a loop they deal damage to each other
+// until the HP of one of them is <= 0
+void Brawl::fight(Fighter* f1, Fighter* f2){
     bool isFightOver = false;
     int counter = 1;
+ 
+    cout << "**************************" <<endl;
+    cout << f1->getFighterName() <<endl;
+    cout << f2->getFighterName() <<endl;
+    cout << "**************************" <<endl;
     while(!isFightOver){
-        int f1_damage = f1.dealDamage();
-        int f2_damage = f2.dealDamage();
+        int f1_damage = f1->dealDamage();
+        int f2_damage = f2->dealDamage();
 
         cout << "\n" << "***** Round " << counter << " *****" << endl;
-        cout << f1.getFighterName() << " dealt " << f1_damage <<
-         " to " << f2.getFighterName() << endl;
-        f2.setFighterHP(f2.getFighterHP() - f1_damage);
-        cout << f1.getFighterName() << " has " << f1.getFighterHP() << "HP" << endl;
-        cout << f2.getFighterName() << " has " << f2.getFighterHP() << "HP" << endl;
+        cout << f1->getFighterName() << " dealt " << f1_damage <<
+         " to " << f2->getFighterName() << endl;
+        f2->setFighterHP(f2->getFighterHP() - f1_damage);
+        cout << f1->getFighterName() << " has " << f1->getFighterHP() << "HP" << endl;
+        cout << f2->getFighterName() << " has " << f2->getFighterHP() << "HP" << endl;
 
-        if(f2.getFighterHP() <= 0){
-            cout << f2.getFighterName() << " is knocked out" << endl;
-            isFightOver = true;
+        if(f2->getFighterHP() <= 0){
+            f2->setIsEliminated(true);
+            cout << f2->getFighterName() << " is knocked out" << endl;
             // remove from array
+            isFightOver = true;
         } else {
-            cout << f2.getFighterName() << " dealt " << f2_damage <<
-            " to " << f1.getFighterName() << endl; 
-            f1.setFighterHP(f1.getFighterHP() - f2_damage);
-            cout << f1.getFighterName() << " has " << f1.getFighterHP() << "HP"<< endl;
-            cout << f2.getFighterName() << " has " << f2.getFighterHP() << "HP" << endl;
-            if(f1.getFighterHP() <= 0){
-                cout << f1.getFighterName() << " is knocked out" << endl;
-                isFightOver = true;
+            cout << f2->getFighterName() << " dealt " << f2_damage <<
+            " to " << f1->getFighterName() << endl; 
+            f1->setFighterHP(f1->getFighterHP() - f2_damage);
+            cout << f1->getFighterName() << " has " << f1->getFighterHP() << "HP"<< endl;
+            cout << f2->getFighterName() << " has " << f2->getFighterHP() << "HP" << endl;
+            if(f1->getFighterHP() <= 0){
+                f1->setIsEliminated(true);
+                cout << f1->getFighterName() << " is knocked out" << endl;
                 // remove from array
+                isFightOver = true;
             }
         } 
         counter++;
     }
 }
 
-void shuffleFightersOrder(vector<Fighter>& fighters){
-    std::shuffle(std::begin(fighters), std::end(fighters), rng);
+// Function that removes the eliminated fighter by replacing 
+// the vector with new one populated only with the winners of fights
+void Brawl::removeLosers(){
+    
+  vector<Fighter> winers;
+  
+  for(int i = 0; i < fighters.size(); i++){
+        if(!this->fighters[i].getIsEliminated()){
+            winers.push_back(this->fighters[i]);
+        }    
+    }
+    this->setFighters(winers);
 }
 
+// Function that returns the index of fighter by given name
+int Brawl::returnIndex(string fighterName){
+
+    // string myString = f1.getFighterName();
+    auto it = find_if(this->fighters.begin(), this->fighters.end(), [&fighterName]
+    (const Fighter& fighter) {
+        // cout << "MS " << myString <<endl;
+        // cout << "NAME " << ((Fighter)fighter).getFighterName() <<endl;
+        return ((Fighter)fighter).getFighterName() == fighterName;
+        });
+
+    if (it != fighters.end())
+    {
+        int index = std::distance(this->fighters.begin(), it);
+        return index;
+    }
+    return -1;
+}
+
+// Function that iterates over the vector and prints the name of the winner  
+void Brawl::printFightersNames(){
+    for(vector<Fighter>::iterator fighter = fighters.begin();
+     fighter != fighters.end(); ++fighter){
+        if(fighter->getIsWinner() == 1) {
+            cout << "****** Winner ******"<< endl;
+            cout << "Figther: " << fighter->getFighterName() << " is the Winner" << endl; 
+        }
+     }
+}
+
+// ******************** HELPER FUNCS *************************
 // prints the menu options for the loop in main function
 void printMenuOptions(){
     cout << "***** Menu Options *****" << endl;
@@ -177,9 +282,7 @@ void printMenuOptions(){
     cout << "3. Print All Fighters' Names." << endl;         
     cout << "4. Start a brawl." << endl;
     cout << "5. Print Brawl Winner." << endl;
-    // cout << "6. Save districts with no winners to file." << endl;
-    // cout << "7. Print districts from file." << endl;
-    cout << "8. Print options." << endl;
+    cout << "6. Print options." << endl;
     cout << "0. Exit." << endl;            
 }
 
@@ -240,33 +343,5 @@ void generateRandomPairs(int higher){
     // cout << "After" <<endl;
     for(int i = 0; i < higher; i++){
         // cout << i << " - " << arr[i]  << endl;
-    }
-}
-
-void startBrawl(vector<Fighter>& fighters){
-    bool haveWinner = false;
-    while(!haveWinner){
-        int size = fighters.size();
-        cout << "size " << size <<endl;
-        if(size % 2 == 0){
-            // Even total number of fighters
-            for(int i = 0; i < size; i += 2){
-                fight(fighters, fighters[i], fighters[i+1]);
-            }
-        } else {
-            // Odd total number of fighters
-             for(int i = 0; i < size-1; i += 2){ 
-                fight(fighters, fighters[i], fighters[i+1]);
-            }
-        }
-
-        if(fighters.size() == 1){
-            haveWinner = true;
-            cout << "****** Winner ******"<< endl;
-            cout << "Winner is " << fighters[0].getFighterName() << endl;
-            cout << "^^^^^^ Winner ^^^^^^"<< endl;
-
-        } 
-            
     }
 }
